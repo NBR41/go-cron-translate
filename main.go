@@ -9,7 +9,12 @@ import (
 )
 
 func main() {
+	if len(os.Args) == 0 {
+		log.Fatal(`usage: go-cron-translate "[CRON expr]"`)
+		return
+	}
 	val, err := translator.GetTranslation(os.Args[1])
+
 	if err != nil {
 		log.Fatal(err.Error())
 	}
