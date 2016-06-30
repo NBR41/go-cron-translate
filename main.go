@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	if len(os.Args) == 0 {
+	if len(os.Args) == 1 {
 		log.Fatal(`usage: go-cron-translate "[CRON expr]"`)
 		return
 	}
