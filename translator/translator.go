@@ -55,10 +55,22 @@ const (
 	fmtInvalidParam = "invalid crontab string [%s]"
 	fmtInvalidDOTW  = "invalid day of the week value [%s]"
 	fmtInvalidMonth = "invalid month value [%s]"
-	fmtHour         = "%02sh%02s"
-	fmtEvery        = "every %s"
-	fmtEveryN       = "every %s minutes of %sh"
-	fmtRange        = "from %s to %s"
+
+	fmtEveryNMonths    = "every %s months"
+	everyDay           = "every day"
+	fmtEveryNDays      = "every %s days"
+	everyMinute        = "every minute"
+	fmtEveryNMinute    = "every %s minutes"
+	fmtEveryNMinuteOf  = "every %s minutes of %sh"
+	everyHour          = "every hour"
+	fmtEveryNHours     = "every %s hours"
+	fmtAtN             = "at %s"
+	fmtHourPastMinutes = "%s past %s minutes"
+
+	fmtHour     = "%02sh"
+	fmtFullHour = "%02sh%02s"
+	fmtEvery    = "every %s"
+	fmtRange    = "from %s to %s"
 )
 
 type translator func([][]string, []int) (string, error)
@@ -128,24 +140,82 @@ func getMinuteHourTranslation(reparts [][]string, modes []int) (string, error) {
 	switch modes[hh] {
 	case modeAtN:
 		switch modes[mm] {
-		case modeAtN:
-			return "at " + fmt.Sprintf(fmtHour, reparts[hh][3], reparts[mm][3]), nil
+		case modeEvery:
+			//TODO
 		case modeEveryN:
-			return fmt.Sprintf(fmtEveryN, strings.TrimPrefix(reparts[mm][2], "/"), reparts[hh][3]), nil
+			return fmt.Sprintf(fmtEveryNMinuteOf, strings.TrimPrefix(reparts[mm][2], "/"), reparts[hh][3]), nil
+		case modeAtN:
+			return fmt.Sprintf(fmtAtN, fmt.Sprintf(fmtFullHour, reparts[hh][3], reparts[mm][3])), nil
+		case modeList:
+			//TODO
+		case modeRange:
+			//TODO
 		}
 
 	case modeEvery:
 		switch modes[mm] {
 		case modeEvery:
-			return fmt.Sprintf(fmtEvery, "minutes"), nil
+			return everyMinute, nil
+		case modeEveryN:
+			return fmt.Sprintf(fmtEveryNMinute, strings.TrimPrefix(reparts[mm][2], "/")), nil
 		case modeAtN:
 			fallthrough
 		case modeList:
-			return fmt.Sprintf(fmtEvery, "hour past "+reparts[mm][3]+" minutes"), nil
+			return fmt.Sprintf(fmtHourPastMinutes, everyHour, reparts[mm][3]), nil
+		case modeRange:
+			//TODO
+		}
+
+	case modeEveryN:
+		switch modes[mm] {
+		case modeEvery:
+			//TODO
 		case modeEveryN:
-			return fmt.Sprintf(fmtEvery, strings.TrimPrefix(reparts[mm][2], "/")+" minutes"), nil
+			return fmt.Sprintf(fmtEveryNMinute, strings.TrimPrefix(reparts[mm][2], "/")) + " " + fmt.Sprintf(fmtEveryNHours, strings.TrimPrefix(reparts[hh][2], "/")), nil
+
+		case modeAtN:
+			return fmt.Sprintf(fmtHourPastMinutes, fmt.Sprintf(fmtEveryNHours, strings.TrimPrefix(reparts[hh][2], "/")), reparts[mm][3]), nil
+		case modeList:
+			//TODO
+		case modeRange:
+			//TODO
+		}
+
+	case modeList:
+		switch modes[mm] {
+		case modeEvery:
+			//TODO
+		case modeEveryN:
+			//TODO
+		case modeAtN:
+			parts := strings.Split(reparts[hh][3], ",")
+			ret := make([]string, len(parts))
+			for i := range parts {
+				ret[i] = fmt.Sprintf(fmtFullHour, parts[i], reparts[mm][3])
+			}
+			return fmt.Sprintf(fmtAtN, strings.Join(ret, ",")), nil
+		case modeList:
+			//TODO
+		case modeRange:
+			//TODO
+		}
+
+	case modeRange:
+		switch modes[mm] {
+		case modeEvery:
+			//TODO
+		case modeEveryN:
+			//TODO
+		case modeAtN:
+			parts := strings.Split(reparts[hh][1], "-")
+			return fmt.Sprintf(fmtHourPastMinutes, everyHour, reparts[mm][3]) + " " + fmt.Sprintf(fmtRange, fmt.Sprintf(fmtHour, parts[0]), fmt.Sprintf(fmtHour, parts[1])), nil
+		case modeList:
+			//TODO
+		case modeRange:
+			//TODO
 		}
 	}
+
 	return "", nil
 }
 
@@ -157,12 +227,12 @@ func getDayTranslation(reparts [][]string, modes []int) (string, error) {
 
 	switch modes[dd] {
 	case modeEvery:
-		if modes[ddd] != modeEvery || modes[hh] == modeEvery {
+		if modes[ddd] != modeEvery || modes[hh] == modeEvery || modes[hh] == modeEveryN || modes[hh] == modeRange || modes[hh] == modeList {
 			return "", nil
 		}
-		return pref + fmt.Sprintf(fmtEvery, "day"), nil
+		return pref + everyDay, nil
 	case modeEveryN:
-		return pref + fmt.Sprintf(fmtEvery, strings.TrimPrefix(reparts[dd][2], "/")+" days"), nil
+		return pref + fmt.Sprintf(fmtEveryNDays, strings.TrimPrefix(reparts[dd][2], "/")), nil
 	case modeAtN:
 		fallthrough
 	case modeList:
@@ -183,12 +253,12 @@ func getMonthTranslation(reparts [][]string, modes []int) (string, error) {
 		}
 		return "of the month", nil
 	case modeEveryN:
-		return fmt.Sprintf(fmtEvery, strings.TrimPrefix(reparts[mmm][2], "/")+" months"), nil
+		return fmt.Sprintf(fmtEveryNMonths, strings.TrimPrefix(reparts[mmm][2], "/")), nil
 	case modeAtN:
 		fallthrough
 	case modeList:
-		var parts = strings.Split(reparts[mmm][3], ",")
-		var ret = make([]string, len(parts))
+		parts := strings.Split(reparts[mmm][3], ",")
+		ret := make([]string, len(parts))
 		for i := range parts {
 			if _, present := monthNames[parts[i]]; !present {
 				return "", fmt.Errorf(fmtInvalidMonth, reparts[mmm][3])
@@ -198,7 +268,7 @@ func getMonthTranslation(reparts [][]string, modes []int) (string, error) {
 		return "of " + strings.Join(ret, ","), nil
 	case modeRange:
 		parts := strings.Split(reparts[mmm][1], "-")
-		var ret = make([]string, len(parts))
+		ret := make([]string, len(parts))
 		for i := range parts {
 			if _, present := monthNames[parts[i]]; !present {
 				return "", fmt.Errorf(fmtInvalidMonth, parts[i])
@@ -217,7 +287,7 @@ func getDOTWTranslation(reparts [][]string, modes []int) (string, error) {
 		return "", nil
 	case modeRange:
 		parts := strings.Split(reparts[ddd][1], "-")
-		var ret = make([]string, len(parts))
+		ret := make([]string, len(parts))
 		for i := range parts {
 
 			if _, present := dOTW[parts[i]]; !present {
@@ -229,8 +299,8 @@ func getDOTWTranslation(reparts [][]string, modes []int) (string, error) {
 	case modeAtN:
 		fallthrough
 	case modeList:
-		var parts = strings.Split(reparts[ddd][3], ",")
-		var ret = make([]string, len(parts))
+		parts := strings.Split(reparts[ddd][3], ",")
+		ret := make([]string, len(parts))
 		for i := range parts {
 			if _, present := dOTW[parts[i]]; !present {
 				return "", fmt.Errorf(fmtInvalidDOTW, parts[i])
@@ -243,12 +313,3 @@ func getDOTWTranslation(reparts [][]string, modes []int) (string, error) {
 		return "", nil
 	}
 }
-
-/*
-0 5 5 {0:0 1: 2: 3:0 4: } 2
-* 5 5 {0:* 1:* 2: 3: 4: } 0
-5,10,25 5 5 {0:5,10,25 1: 2: 3:5,10,25 4:,10,25 } 3
-2-5 5 5 {0:2-5 1:2-5 2: 3: 4: } 4
-*\/2 5 5 {0:*\/2 1:* 2:/2 3: 4: } 1
-22 5 5 {0:22 1: 2: 3:22 4: } 2
-*/

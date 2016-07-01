@@ -20,7 +20,16 @@ func TestGetTranslation(t *testing.T) {
 		{`0 22 * * 1-5`, `at 22h00 from Monday to Friday`},
 		{`*/5 22 * * 1-5`, `every 5 minutes of 22h from Monday to Friday`},
 		{`*/5 * * * *`, `every 5 minutes`},
-		{`* * * * *`, `every minutes`},
+		{`* * * * *`, `every minute`},
+		{`0 */12 * * *`, `every 12 hours past 0 minutes`},
+		{`5 */12 * * *`, `every 12 hours past 5 minutes`},
+		{`59 12-23 * * *`, `every hour past 59 minutes from 12h to 23h`},
+		{`0 4,16 * * *`, `at 04h00,16h00`},
+		{
+			`0 0,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23 * * *`,
+			`at 00h00,07h00,08h00,09h00,10h00,11h00,12h00,13h00,14h00,15h00,16h00,17h00,18h00,19h00,20h00,21h00,22h00,23h00`,
+		},
+		{`*/15 */2 * * *`, `every 15 minutes every 2 hours`},
 	}
 
 	var out string
