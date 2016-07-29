@@ -56,20 +56,27 @@ const (
 	fmtInvalidDOTW  = "invalid day of the week value [%s]"
 	fmtInvalidMonth = "invalid month value [%s]"
 
-	fmtEveryNMonths    = "every %s months"
-	everyDay           = "every day"
-	fmtEveryNDays      = "every %s days"
-	everyMinute        = "every minute"
-	fmtEveryMinuteOf   = "every minute of %s"
-	fmtEveryMinuteFrom = "every minute from %s to %s"
-	fmtEveryNMinute    = "every %s minutes"
-	fmtEveryNMinuteOf  = "every %s minutes of %s"
-	everyHour          = "every hour"
-	fmtEveryNHours     = "every %s hours"
-	fmtAtN             = "at %s"
-	fmtOf              = "of %s"
-	fmtAnd             = "and %s"
-	fmtHourPastMinutes = "%s past %s minutes"
+	xhour = "XX"
+
+	fmtEveryNMonths = "every %s months"
+	everyDay        = "every day"
+	fmtEveryNDays   = "every %s days"
+
+	everyMinute          = "every minute"
+	fmtEveryMinuteOf     = "every minute of %s"
+	fmtEveryMinuteFrom   = "every minute from %s to %s"
+	fmtEveryMinuteFromOf = "every minute from %s to %s of %s"
+	fmtEveryNMinutes     = "every %s minutes"
+	fmtEveryNMinutesOf   = "every %s minutes of %s"
+
+	everyHour        = "every hour"
+	fmtEveryHourFrom = "every hour from %s to %s"
+	fmtEveryNHours   = "every %s hours"
+
+	fmtAtN   = "at %s"
+	fmtAtNOf = "at %s of %s"
+	fmtOf    = "of %s"
+	fmtAnd   = "and %s"
 
 	fmtHour     = "%02sh"
 	fmtFullHour = "%02sh%02s"
@@ -150,35 +157,40 @@ func getMinuteHourTranslation(reparts [][]string, modes []int) (string, error) {
 		case modeEvery:
 			return everyMinute, nil
 		case modeEveryN:
-			return fmt.Sprintf(fmtEveryNMinute, getEveryValue(reparts[mm])), nil
+			return fmt.Sprintf(fmtEveryNMinutes, getEveryValue(reparts[mm])), nil
 		case modeAtN:
 			fallthrough
 		case modeList:
-			return fmt.Sprintf(fmtHourPastMinutes, everyHour, reparts[mm][3]), nil
+			mparts := strings.Split(reparts[mm][3], ",")
+			ret := make([]string, len(mparts))
+			for i := range mparts {
+				ret[i] = fmt.Sprintf(fmtFullHour, xhour, mparts[i])
+			}
+			return fmt.Sprintf(fmtAtNOf, strings.Join(ret, ", "), everyHour), nil
+			//return fmt.Sprintf(fmtHourPastMinutes, everyHour, reparts[mm][3]), nil
 		case modeRange:
 			parts := strings.Split(reparts[mm][1], "-")
-			return fmt.Sprintf(fmtEveryMinuteFrom, fmt.Sprintf(fmtFullHour, "XX", parts[0]), fmt.Sprintf(fmtFullHour, "XX", parts[1])) + " " + fmt.Sprintf(fmtOf, everyHour), nil
+			return fmt.Sprintf(fmtEveryMinuteFromOf, fmt.Sprintf(fmtFullHour, xhour, parts[0]), fmt.Sprintf(fmtFullHour, xhour, parts[1]), everyHour), nil
 		}
 
 	case modeEveryN:
-		var hv = " " + fmt.Sprintf(fmtOf, fmt.Sprintf(fmtEveryNHours, strings.TrimPrefix(reparts[hh][2], "/")))
 		switch modes[mm] {
 		case modeEvery:
-			return everyMinute + hv, nil
+			return fmt.Sprintf(fmtEveryMinuteOf, fmt.Sprintf(fmtEveryNHours, strings.TrimPrefix(reparts[hh][2], "/"))), nil
 		case modeEveryN:
-			return fmt.Sprintf(fmtEveryNMinute, getEveryValue(reparts[mm])) + " " + fmt.Sprintf(fmtEveryNHours, strings.TrimPrefix(reparts[hh][2], "/")), nil
+			return fmt.Sprintf(fmtEveryNMinutesOf, getEveryValue(reparts[mm]), fmt.Sprintf(fmtEveryNHours, strings.TrimPrefix(reparts[hh][2], "/"))), nil
 		case modeAtN:
-			return fmt.Sprintf(fmtHourPastMinutes, fmt.Sprintf(fmtEveryNHours, getEveryValue(reparts[hh])), reparts[mm][3]), nil
+			fallthrough
 		case modeList:
 			parts := strings.Split(reparts[mm][3], ",")
 			ret := make([]string, len(parts))
 			for i := range parts {
-				ret[i] = fmt.Sprintf(fmtFullHour, "XX", parts[i])
+				ret[i] = fmt.Sprintf(fmtFullHour, xhour, parts[i])
 			}
-			return fmt.Sprintf(fmtAtN, strings.Join(ret, ", ")) + hv, nil
+			return fmt.Sprintf(fmtAtNOf, strings.Join(ret, ", "), fmt.Sprintf(fmtEveryNHours, strings.TrimPrefix(reparts[hh][2], "/"))), nil
 		case modeRange:
 			parts := strings.Split(reparts[mm][1], "-")
-			return fmt.Sprintf(fmtEveryMinuteFrom, fmt.Sprintf(fmtFullHour, "XX", parts[0]), fmt.Sprintf(fmtFullHour, "XX", parts[1])) + hv, nil
+			return fmt.Sprintf(fmtEveryMinuteFromOf, fmt.Sprintf(fmtFullHour, xhour, parts[0]), fmt.Sprintf(fmtFullHour, xhour, parts[1]), fmt.Sprintf(fmtEveryNHours, strings.TrimPrefix(reparts[hh][2], "/"))), nil
 		}
 
 	case modeAtN:
@@ -186,7 +198,7 @@ func getMinuteHourTranslation(reparts [][]string, modes []int) (string, error) {
 		case modeEvery:
 			return fmt.Sprintf(fmtEveryMinuteOf, fmt.Sprintf(fmtHour, reparts[hh][3])), nil
 		case modeEveryN:
-			return fmt.Sprintf(fmtEveryNMinuteOf, getEveryValue(reparts[mm]), fmt.Sprintf(fmtHour, reparts[hh][3])), nil
+			return fmt.Sprintf(fmtEveryNMinutesOf, getEveryValue(reparts[mm]), fmt.Sprintf(fmtHour, reparts[hh][3])), nil
 		case modeAtN:
 			return fmt.Sprintf(fmtAtN, fmt.Sprintf(fmtFullHour, reparts[hh][3], reparts[mm][3])), nil
 		case modeList:
@@ -202,25 +214,23 @@ func getMinuteHourTranslation(reparts [][]string, modes []int) (string, error) {
 		}
 
 	case modeList:
+		hparts := strings.Split(reparts[hh][3], ",")
 		switch modes[mm] {
 		case modeEvery:
-			parts := strings.Split(reparts[hh][3], ",")
-			ret := make([]string, len(parts))
-			for i := range parts {
-				ret[i] = fmt.Sprintf(fmtHour, parts[i])
+			ret := make([]string, len(hparts))
+			for i := range hparts {
+				ret[i] = fmt.Sprintf(fmtHour, hparts[i])
 			}
 			return fmt.Sprintf(fmtEveryMinuteOf, strings.Join(ret, ", ")), nil
 		case modeEveryN:
-			parts := strings.Split(reparts[hh][3], ",")
-			ret := make([]string, len(parts))
-			for i := range parts {
-				ret[i] = fmt.Sprintf(fmtHour, parts[i])
+			ret := make([]string, len(hparts))
+			for i := range hparts {
+				ret[i] = fmt.Sprintf(fmtHour, hparts[i])
 			}
-			return fmt.Sprintf(fmtEveryNMinuteOf, getEveryValue(reparts[mm]), strings.Join(ret, ", ")), nil
+			return fmt.Sprintf(fmtEveryNMinutesOf, getEveryValue(reparts[mm]), strings.Join(ret, ", ")), nil
 		case modeAtN:
 			fallthrough
 		case modeList:
-			hparts := strings.Split(reparts[hh][3], ",")
 			mparts := strings.Split(reparts[mm][3], ",")
 			ret := make([]string, len(hparts)*len(mparts))
 			k := 0
@@ -230,14 +240,11 @@ func getMinuteHourTranslation(reparts [][]string, modes []int) (string, error) {
 					k++
 				}
 			}
-
 			return fmt.Sprintf(fmtAtN, strings.Join(ret, ", ")), nil
 		case modeRange:
-			hparts := strings.Split(reparts[hh][3], ",")
 			mparts := strings.Split(reparts[mm][1], "-")
 			ret := make([]string, len(hparts))
 			for i := range hparts {
-
 				ret[i] = fmt.Sprintf(fmtRange, fmt.Sprintf(fmtFullHour, hparts[i], mparts[0]), fmt.Sprintf(fmtFullHour, hparts[i], mparts[1]))
 			}
 
@@ -245,22 +252,24 @@ func getMinuteHourTranslation(reparts [][]string, modes []int) (string, error) {
 		}
 
 	case modeRange:
+		hparts := strings.Split(reparts[hh][1], "-")
 		switch modes[mm] {
 		case modeEvery:
-			//TODO
-			return "", nil
+			return fmt.Sprintf(fmtEveryMinuteOf, fmt.Sprintf(fmtEveryHourFrom, fmt.Sprintf(fmtHour, hparts[0]), fmt.Sprintf(fmtHour, hparts[1]))), nil
 		case modeEveryN:
-			//TODO
-			return "", nil
+			return fmt.Sprintf(fmtEveryNMinutesOf, getEveryValue(reparts[mm]), fmt.Sprintf(fmtEveryHourFrom, fmt.Sprintf(fmtHour, hparts[0]), fmt.Sprintf(fmtHour, hparts[1]))), nil
 		case modeAtN:
-			parts := strings.Split(reparts[hh][1], "-")
-			return fmt.Sprintf(fmtHourPastMinutes, everyHour, reparts[mm][3]) + " " + fmt.Sprintf(fmtRange, fmt.Sprintf(fmtHour, parts[0]), fmt.Sprintf(fmtHour, parts[1])), nil
+			return fmt.Sprintf(fmtAtNOf, fmt.Sprintf(fmtFullHour, xhour, reparts[mm][3]), fmt.Sprintf(fmtEveryHourFrom, fmt.Sprintf(fmtHour, hparts[0]), fmt.Sprintf(fmtHour, hparts[1]))), nil
 		case modeList:
-			//TODO
-			return "", nil
+			parts := strings.Split(reparts[mm][3], ",")
+			ret := make([]string, len(parts))
+			for i := range parts {
+				ret[i] = fmt.Sprintf(fmtFullHour, xhour, parts[i])
+			}
+			return fmt.Sprintf(fmtAtNOf, strings.Join(ret, ", "), fmt.Sprintf(fmtEveryHourFrom, fmt.Sprintf(fmtHour, hparts[0]), fmt.Sprintf(fmtHour, hparts[1]))), nil
 		case modeRange:
-			//TODO
-			return "", nil
+			mparts := strings.Split(reparts[mm][1], "-")
+			return fmt.Sprintf(fmtEveryMinuteFromOf, fmt.Sprintf(fmtFullHour, xhour, mparts[0]), fmt.Sprintf(fmtFullHour, xhour, mparts[1]), fmt.Sprintf(fmtEveryHourFrom, fmt.Sprintf(fmtHour, hparts[0]), fmt.Sprintf(fmtHour, hparts[1]))), nil
 		}
 	}
 
