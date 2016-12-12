@@ -5,12 +5,12 @@ import (
 	"log"
 	"os"
 
-	"github.com/NBR41/go-cron-translate/translator"
+	"github.com/NBR41/gocrontranslate/translator"
 )
 
 func main() {
 	if len(os.Args) == 1 {
-		log.Fatal(`usage: go-cron-translate "[CRON expr]"`)
+		log.Fatal(`usage: gocrontranslate "[CRON expr]"`)
 		return
 	}
 	val, err := translator.GetTranslation(os.Args[1])
