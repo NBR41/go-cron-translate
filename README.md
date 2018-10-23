@@ -5,4 +5,22 @@
 
 # gocrontranslate
 
-A simple tool to to translate a crontab format to text
+A simple tool to translate a crontab format to text
+
+## Installation
+
+```
+go get github.com/NBR41/gocrontranslate
+```
+
+## Usage
+
+```
+./gocrontranslate "1 2 3 4 *"
+```
+displays
+```
+at 02h01 of every 3 of April
+```
+
+The package github.com/NBR41/gocrontranslate/translator can also be used in stand alone to get the translation.
