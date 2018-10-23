@@ -7,7 +7,7 @@
 
 A simple tool to translate a crontab format to text
 
-## Installation
+## Installation
 
 ```
 go get github.com/NBR41/gocrontranslate
@@ -15,11 +15,13 @@ go get github.com/NBR41/gocrontranslate
 
 ## Usage
 
-```
+```shell
 ./gocrontranslate "1 2 3 4 *"
 ```
+
 displays
-```
+
+```shell
 at 02h01 of every 3 of April
 ```
 
