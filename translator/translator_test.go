@@ -4,9 +4,7 @@ import (
 	"testing"
 )
 
-// TODO: need more test
 func TestGetTranslation(t *testing.T) {
-
 	var test = [][]string{
 		{`* * * * *`, `every minute of every day`},
 

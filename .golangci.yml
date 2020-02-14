@@ -1,0 +1,18 @@
+linters:
+  enable-all: true
+  disable:
+    - lll
+    - wsl
+
+issues:
+  exclude-use-default: false
+  exclude-rules:
+    - path: _test\.go
+      linters:
+        - funlen
+        - dupl
+        - gomnd
+
+    - path: translator/translator\.go
+      linters:
+        - gochecknoglobals
