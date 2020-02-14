@@ -16,3 +16,11 @@ issues:
     - path: translator/translator\.go
       linters:
         - gochecknoglobals
+
+    - path: doc\.go
+      linters:
+        - misspell
+
+    - path: main.go
+      linters:
+        - gomnd
